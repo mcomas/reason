@@ -1,0 +1,384 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="ca" lang="ca">
+<head>
+	<title>:: REASON calculator ::</title>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<link rel="stylesheet" type="text/css" href="style.css" media="screen" />
+	<script src="jquery.js" type="text/javascript"></script>
+	<script src="sprintf.js" type="text/javascript"></script>
+	<script type="text/javascript">
+	//<![CDATA[
+	var age_filter=[35,74];
+	var sbp_filter=[60,220];
+	var dbp_filter=[30,140];
+
+	var t_age=['Edat', 'Edad', 'Age'];
+	var t_sex=['Sexe', 'Sexo', 'Sex'];
+	var t_smoker=['Fumador/a', 'Fumador/a', 'Smoker'];
+	var t_diabetes=['Diabètic/a','Diabético/a','Diabetic'];
+	var t_yes=['Si','Sí','Yes'];
+	var t_no=['No','No','No'];
+	var t_never=['Mai', 'Nunca', 'Never']
+	var t_smoking=['Fumo o vaig deixar-ho fa menys d\'un any', 'Fumo o lo deje hace menos de un año', 'Smoking or quit no more than one year ago']
+	var t_previously=['Fa més d\'un any que no fumo', 'Hace más de un año que no fumo', 'No smoking since at least one year ago']
+	var t_man=['Home','Hombre','Man'];
+	var t_woman=['Dona','Mujer','Woman'];
+	var t_sbp=['Tensió arterial sistòlica (mmHg):','Tensión arterial sistólica (mmHg):','Systolic blood pressure (mmHg):'];
+	var t_dbp=['Tensió arterial diastòlica (mmHg):','Tensión arterial diastólica (mmHg):','Diastolic blood pressure (mmHg):'];
+
+	var t_missing=['Manca informar %1$s','Falta informar %1$s','Missing %1$s'];
+	var t_out_of_range=['%1$s ha d\'estar entre %2$d i %3$d','%1$s debe estar entre %2$d y %3$d', '%1$s range goes from %2$d to %3$d'];
+	var t_calculate=['Calcula','Calcula','Calculate'];
+	var t_clean=['Neteja', 'Limpia', 'Clean'];
+	
+	var t_instr_acces = ['Instruccions', 'Instrucciones', 'Instructions'];
+	var t_inf_acces = ['Més informació', 'Más información', 'More information'];
+
+	var t_instructions = ['<h4>Intruccions</h4>', '<h4>Instrucciones</h4>', '<h4>Instructions</h4>'];
+	t_instructions[0] += '<p>La presencia d\'arteriosclerosis a les arteries de les cames es pot diagnosticar amb l\'índex turmell-braç (ITB) que compara la pressió arterial sistòlica (PAS) de la cama i el braç [ITB=PAS turmell / PAS braç]. En condicions normals les dues pressions haurien de ser similars. Si la pressió arterial és superior al braç indica la possible presència d\'arteriosclerosis a les cames que obstrueix el pas de la sang. Un ITB < 0.9 és indicatiu d\'una obstrucció important (al voltant del 50% del calibre de l\'arteria) i es considera diagnòstic d\'arteriopatia perifèrica, i en conseqüència d\'aterosclerosi asimptomàtica.</p>';
+	t_instructions[0] += '<p>La calculadora REASON de REGICOR estima la probabilitat de que una persona tingui un índex turmell-braç menor a 0.9 en aquests moments.</p>';
+	t_instructions[0] += '<p>Es pot calcular el risc en persones entre 50 i 79 anys amb aquest senzill programa que us demanarà la informació necessària. La calculadora de risc REASON necessita 6 dades per a donar un resultat: el sexe, l\'edat, si és fumador o no i si és diabètic o no, i la pressió arterial sistòlica i diastòlica.</p>'
+	
+	t_instructions[1] += '<p>La presencia de arteriosclerosis en las arterias de las piernas se puede diagnosticar con el índice tobillo-brazo (ITB) que compara la presión arterial sistólica (PAS) de la pierna y el brazo [ITB = PAS tobillo / PAS brazo]. En condiciones normales las dos presiones deberían ser similares. Si la presión arterial es superior en el brazo indica la posible presencia de arteriosclerosis en las piernas que obstruye el paso de la sangre. Un ITB <0.9 es indicativo de una obstrucción importante (alrededor del 50% del calibre de la arteria) y se considera diagnóstico de arteriopatía periférica.</p>';
+	t_instructions[1] += '<p>La calculadora REASON de REGICOR estima la probabilidad de que una persona tenga un índice tobillo-brazo menor a 0.9 en estos momentos.</p>';
+	t_instructions[1] += '<p>Si se tiene entre 50 y 79 años y se quiere calcular el riesgo, este programa pide la información necesaria. La calculadora de riesgo REASON necesita 6 datos para dar un resultado. En primer lugar: el sexo, la edad, si es fumador o no y si es diabético o no. En segundo lugar, los datos relativos a los niveles de presión arterial sistólica y diastólica.</p>';
+
+	t_instructions[2] += '<p>Arteriosclerosis of the arteries in the legs can be diagnosed using the ankle-brachial index (ABI). This calculation compares the systolic blood pressure (SBP) measured in the leg and the arm [ABI=SBP ankle / SBP brachial]. Under normal conditions the two measurements should be similar. If the blood pressure is higher in the arm, it is possible that arteriosclerosis in the legs is obstructing the blood flow. An ABI <0.9 indicates a major obstruction (about 50% of the artery\'s diameter) and a diagnosis of peripheral artery disease (PAD).</p>';
+
+	t_instructions[2] += '<p>The REASON calculator developed by REGICOR estimates the probability that an individual currently has an ABI <0.9.</p>';
+
+	t_instructions[2] += '<p>If you are between 50 and 79 years old and want to calculate your risk of having this indicator of possible peripheral artery disease (which should then be discussed with your physician), this simple programme asks you for the necessary information. The REASON risk calculator requires just 6 basic items of information about you: sex, age, smoker (yes or no), diabetic (yes or no), and current systolic (top number) and diastolic (bottom number) blood pressures.</p>';
+
+	var bibliography='[1] Ramos, R. ,Baena-Díez, J.M., Quesada, M., Solanas, P., Subirana, I., Sala, J., Alzamora, M., Forès, R., Masiá, R., Elosua, R., Grau, M., Cordón, F., Pera, G., Rigo, F., Martí, R., Ponjoan, A., Cerezo, C., Brugada, R., Marrugat, J. REASON: a risk score identifying candidates to screen for peripheral arterial disease using ankle brachial index. <i>Atherosclerosis.</i> 2011; 214:474-9.enum';
+
+	var bib = '<h4>Bibliografia:</h4><p><ul>';
+	bib += '<li> [1] European guidelines on cardiovascular disease prevention in clinical practice: executive summary. Fourth Joint Task Force of European and Other Societies on Cardiovascular Disease Prevention in Clinical Practice. Atherosclerosis. 2007; 194: 1-45.';
+	bib += '<li> [2] Comín E, Solanas P, Cabezas C, et al. Estimating cardiovascular risk in Spain using different algorithms. Rev Esp Cardiol 2007;60:693-702.';
+	bib += '<li> [3] Heald CL, Fowkes FGR, Murray GD, Price JF; Ankle Brachial Index Collaboration. Risk of mortality and cardiovascular disease associated with the ankle-brachial index: Systematic review. Atherosclerosis. 2006; 189:61-9.';
+	bib += '<li> [4] Ankle Brachial Index Collaboration. Ankle brachial index combined with Framingham risk score to predict cardiovascular events and mortality. A meta-analysis. JAMA 2008; 300:197-208.';
+	bib += '<li> [5] Ramos R, Quesada M, Solanas P, et al. Prevalence of symptomatic and asymptomatic peripheral arterial disease and the value of the ankle-brachial index to stratify cardiovascular risk. Eur J Vasc Endovasc Surg. 2009;38:305-11.';
+	bib += '<li> [6] Alzamora MT, Baena-Díez JM, Sorribes M, et al. Peripheral Arterial Disease study (PERART): prevalence and predictive values of asymptomatic peripheral arterial occlusive disease related to cardiovascular morbidity and mortality. BMC Public Health. 2007;7:348.';
+	bib += '<li> [7] Norgren L, Hiatt WR, Dormandy JA, et al. Inter-Society Consensus for the Management of Peripheral Arterial Disease (TASC II). Eur J Vasc Endovasc Surg. 2007; 33: S1-S75.';
+	bib += '<li> [8] Ramos, R. ,Baena-Díez, J.M., Quesada, M., Solanas, P., Subirana, I., Sala, J., Alzamora, M., Forès, R., Masiá, R., Elosua, R., Grau, M., Cordón, F., Pera, G., Rigo, F., Martí, R., Ponjoan, A., Cerezo, C., Brugada, R., Marrugat, J. REASON: a risk score identifying candidates to screen for peripheral arterial disease using ankle brachial index. Atherosclerosis. 2011; 214:474-9.';
+	bib += '</ul></p>';
+
+	var t_info = ['<h4>Més informació</h4>', '<h4>Más información</h4>', '<h4>More information</h4>'];
+	t_info[0] += '<p>Una estratègia clau en la prevenció primària de malalties cardiovasculars (MCV) és utilitzar les funcions de risc per identificar població aparentment sana d\'alt risc [1]. No obstant això, aquestes funcions no identifiquen totes les persones que desenvoluparan un esdeveniment cardiovascular en 10 anys [2]. Una estratègia complementaria és el diagnòstic d\'aterosclerosi asimptomàtica amb la mesura de l\'ITB, que pot millorar la detecció de pacients d\'alt risc [1].</p>';
+	t_info[0] += '<p>Els pacients amb ITB <0,9, ja sigui simptomàtica o asimptomàtica, tenen significativament més  mortalitat i esdeveniments vasculars [3]. L\'ITB proporciona informació independent en comparació amb les funcions de risc coronari [4,5,6].</p>';
+	t_info[0] += '<p>Les directrius del consens inter-societats pel maneig de la malaltia arterial perifèrica [7] recomanen el cribratge amb ITB en tots els subjectes asimptomàtics de 50-69 anys amb història de diabetis o tabaquisme, tots els pacients majors de 70 anys, i en els subjectes amb un risc cardiovascular a 10 anys entre el 10% i 20%. Aquesta recomanació està basada en el consens i, en població espanyola, te una sensibilitat alta (prop del 90%) però una especificitat baixa (prop del 38%): caldria fer un ITB a un 63% de la població.</p>';
+	t_info[0] += '<p>La equació REASON de REGICOR [8] és el primer model dissenyat per predir la probabilitat de tenir d\'un índex turmell-braç (ITB) <0.9 en la població de 50-79 anys d\'edat sense antecedents de malaltia cardiovascular (MCV). En un procés de validació, REASON ha demostrat que proporciona una estimació fiable i precisa d\'aquesta probabilitat. Les estimacions es basen en mesures rutinaries dels factors coneguts de risc de MCV (edat, sexe, consum de tabac, diabetis i pressió arterial).</p>';
+	t_info[0] += '<p>Un cop realitzat l\'ITB als candidats determinats per REASON, si el ITB és menor a 0.9, és important descartar la presencia de símptomes de claudicació intermitent o signes de isquèmia crítica. En els individus asimptomàtics amb un ITB <0.9 cal controlar adequadament els factors de risc cardiovasculars y la evolució del ITB. <br>En individus simptomàtics cal valorar el context del pacient y en funció del judici clínic plantejar la consulta al cirurgià vascular.</p>';
+	t_info[0] += bib;
+
+	t_info[1] += '<p>Una estrategia clave en la prevención primaria de enfermedades cardiovasculares (ECV) es utilizar las funciones de riesgo para identificar individuos de alto riesgo [1]. Sin embargo, las funciones de riesgo no identifican a todas las personas que desarrollarán un evento cardiovascular en 10 años [2]. Una estrategia complementaria es el diagnóstico de aterosclerosis asintomática, que puede mejorar la detección de pacientes de alto riesgo [1].</p>';
+	t_info[1] += '<p>Los pacientes con ITB <0,9, ya sea sintomática o asintomática, tienen un riesgo significativamente mayor de mortalidad y los eventos vasculares [3] y se conoce que el ITB proporciona una información independiente en comparación con las funciones de riesgo coronario [ 4,5,6].</p>';
+	t_info[1] += '<p>Las directrices del consenso inter-sociedades para el manejo de la enfermedad arterial periférica [7] recomiendan el cribado con ITB en todos los sujetos asintomáticos de 50-69 años con historia de diabetes o tabaquismo, todos los pacientes mayores de 70 años, y en los sujetos con un riesgo cardiovascular a 10 años entre el 10% y 20%. Esta recomendación está basada en el consenso y, en población española, tiene una sensibilidad alta (cerca del 90%) pero una especificidad baja (cerca del 38%), y consecuentemente habría que hacer un ITB en un 63% de la población.</p>';
+	t_info[1] += '<p>Las directrices del consenso inter-sociedades para el manejo de la enfermedad arterial periférica [7] recomiendan el cribado con ITB en todos los sujetos asintomáticos de 50-69 años con historia de diabetes o tabaquismo, todos los pacientes mayores de 70 años, y en los sujetos con un riesgo cardiovascular a 10 años entre el 10% y 20%. Esta recomendación está basada en el consenso y, en población española, tiene una sensibilidad alta (cerca del 90%) pero una especificidad baja (cerca del 38%), y consecuentemente habría que hacer un ITB en un 63% de la población.</p>';
+	t_info[1] += '<p>La ecuación REASON de REGICOR con un punto de corte de 4.1 tiene la misma sensibilidad que la recomendación del consenso inter-sociedades pero con una especificidad superior (cerca del 47%), con lo que la población candidata al cribado se reduce hasta el 55 %.</p>';
+	t_info[1] += '<p>Una vez realizado el ITB a los candidatos determinados por REASON, si el ITB es menor a 0.9, es importante descartar la presencia de síntomas de claudicación intermitente o signos de isquemia crítica. En los individuos asintomáticos con un ITB <0.9 hay que controlar adecuadamente los factores de riesgo cardiovasculares y la evolución del ITB.<br>En individuos sintomáticos hay que valorar el contexto del paciente y en función del juicio clínico plantear la consulta al cirujano vascular.</p>';
+	t_info[1] += bib;
+
+	t_info[2] += '<p>A key strategy in the primary prevention of cardiovascular diseases (CVD) is to use “risk equations” to identify individuals who are at high risk for these diseases, which include heart disease, stroke, and peripheral artery disease [1]. Nonetheless, these risk equations do not identify every individual who will experience a cardiovascular event within 10 years [2]. A complementary strategy is the diagnosis of asymptomatic atherosclerosis, which could improve our capacity to detect individuals who are at high risk for these diseases [1].</p>';
+	t_info[2] += '<p>Whether or not an individual has symptoms of cardiovascular disease, if the comparative blood pressure calculation for that person is ABI <0.9 the risk of having a vascular event (such as a stroke) and the risk of death as a result [3] are significantly greater. We know that the ABI calculation provides independent information when compared with the results of coronary risk equations [4,5,6].</p>';
+	t_info[2] += '<p>The consensus guidelines for the management of peripheral artery disease, developed by multiple medical groups [7], recommend ABI screening for all asymptomatic patients aged 50-69 years who have a history of diabetes or smoking, all patients older than 70, and patients whose 10-year cardiovascular risk calculation using the standard coronary risk equations is between 10% and 20%. For the population of Spain, this consensus recommendation has high sensitivity (nearly 90% of at-risk individuals are identified) but low specificity (fewer than 38% of those identified for screening are actually at risk of experiencing peripheral artery disease within 10 years). As a result, the ABI calculation would be needed to improve the risk assessment for 63% of the population.</p>';
+	t_info[2] += '<p>The REASON calculator developed by REGICOR [8] is the first model designed to predict the probability that an individual who is 50 to 79 years old and has no history of cardiovascular disease (CVD) will have an ankle-brachial index (ABI) <0.9. During the process of validating this calculator, REASON delivered a reliable and precise estimate of this probability. The estimates are based on routine information about known CVD risk factors (age, sex, smoking, diabetes, and blood pressure).</p>';
+	t_info[2] += '<p>Using a cut-off point of 4.1, the REASON calculator has the same high sensitivity as the consensus recommendation of the medical societies, but nearly 10% higher specificity (about 47%), which reduces the population to be screened from 63% to 55%.</p>';
+	t_info[2] += '<p>Once the ABI has been calculated for those identified by REASON for screening, if the ABI is less than 0.9, it is important to be able to discard the presence of other conditions, such as symptoms of intermittent claudication or critical ischemia. In asymptomatic individuals with ABI <0.9 it is important to monitor cardiovascular risk factors and any changes in the ABI.<br>When an individual has symptoms of cardiovascular disease, it is important for the physician to evaluate the patient\'s general health and, depending on the physician\'s clinical opinion, consider consulting a vascular surgeon.</p>';
+	t_info[2] += bib;
+
+
+	var t_output=[];
+	t_output[0]='<p>Risc de tenir un índex turmell-braç inferior a 0.9 segons la funció REASON: <strong>%1$1.0f%%<\/strong></p>';
+	t_output[1]='<p>Riesgo de tener un índice tobillo-brazo inferior a 0.9 según la función REASON: <strong>%1$1.0f%%<\/strong></p>';
+	t_output[2]='<p>Risk of having an anckle-brachial index lower than 0.9 according to REASON: <strong>%1$1.0f%%<\/strong></p>';
+
+	var t_output_extra=[];
+	t_output_extra[0] = '<p>Es recomana que una persona amb aquest nivell de risc demani consell mèdic així que li sigui possible, i es plantegi la possibilitat de realitzar-se una mesura de índex turmell-braç.</p>';
+	t_output_extra[1] = '<p>Se recomienda que una persona con este nivel de riesgo pida consejo médico así que le sea posible, y se plantee la posibilidad de realizarse una medida de índice tobillo-brazo.</p>';
+	t_output_extra[2] = '<p>A person with this risk of ABI <0.9 should promptly consult a physician and discuss the possibility of undergoing an ankle-brachial index measurement.</p>';
+
+	var t_output_extrafinal=[];
+	t_output_extrafinal[0] = '<p>A més de les que pugui proposar el seu metge, hi ha algunes mesures que contribueixen a mantenir la nostra salut cardiovascular:<ol><li>Deixi de fumar. El consum de tabac és el factor més determinant de l\'aparició de la malaltia del cor.<li> Controli el seu pes. El sobrepès li afegeix una càrrega extra al seu cor i a les seves artèries.<li> Redueixi el consum de sal i triï aliments saludables com fruites, verdures, peix i prengui fins a 3 cullerades d\'oli d\'oliva o un grapat de fruits secs al dia.<li> Eviti el consum d\'alcohol. L\'alcohol augmenta la pressió de les seves artèries i produeix un increment del nombre de batecs del seu cor.<li> Feu exercici físic regularment. Triï un programa senzill, que pugui mantenir, s\'adapti a la seva condició física i faci-ho regularment. Es recomana caminar de pressa o pujar escales. Encara que el temps òptim és almenys una hora al dia, recordeu que realitzar qualsevol tipus d\'activitat física és millor que no fer res. No és necessari realitzar l\'activitat física durant un període de temps seguit ja que el seu efecte és acumulable al llarg del dia.<li> Redueixi el seu estrès al mínim necessari.</ol></p>'
+	t_output_extrafinal[1] = '<p>Además de las que pueda proponer su médico, hay algunas medidas que contribuyen a mantener nuestra salud cardiovascular: <ol><li>Deje de fumar. El consumo de tabaco es el factor más determinante de la aparición de la enfermedad del corazón.<li>Controle su peso. El sobrepeso le añade una carga extra a su corazón ya sus arterias.<li>Reduzca el consumo de sal y elija alimentos saludables como frutas, verduras, pescado y tome hasta 3 cucharadas de aceite de oliva o un puñado de frutos secos al día. <li>Evite el consumo de alcohol. El alcohol aumenta la presión de sus arterias y produce un incremento del número de latidos de su corazón. <li>Haga ejercicio físico regularmente. Elija un programa sencillo, que pueda mantener, se adapte a su condición física y hágalo regularmente. Se recomienda caminar deprisa o subir escaleras. Aunque el tiempo óptimo es menos una hora al día, recuerde que realizar cualquier tipo de actividad física es mejor que no hacer nada. No es necesario realizar la actividad física durante un periodo de tiempo seguido ya que su efecto es acumulable a lo largo del día. <li>Reduzca su estrés al mínimo necesario.</ol></p>';
+	t_output_extrafinal[2] = '<p>In addition to your doctor\'s advice, there are certain actions that help to maintain cardiovascular health:<ol><li> Don\'t smoke. If you are not a smoker, avoid second-hand smoke. Smoking is the most influential factor in the development of heart disease.<li> Control your weight. Being overweight adds an extra burden to your heart and arteries.<li> Reduce your sodium consumption. Choose healthy foods such as fruits, vegetables, and fish, and consume up to 3 tablespoons of olive oil or a handful of unsalted nuts each day. <li>Avoid alcohol consumption. Alcohol increases the pressure in the arteries and increases your heart rate. <li>Exercise regularly. Choose a simple exercise plan that is appropriate for your physical condition and that you can maintain, and stay with it. Recommended basic activities are brisk walking and taking the stairs. Even though the optimum schedule is one hour every day, remember that any physical activity is better than doing nothing. It is not necessary to complete a day\'s exercise in a single time period. There is a cumulative effect throughout the day. <li>Limit your stress as much as possible.</ol></p>';
+
+	var t_header=[];
+	t_header[0]='<img src="reason_img/logo_regicor.jpg" border="0" /><h1>Calculadora REASON</h1>';
+	t_header[1]='<img src="reason_img/logo_regicor.jpg" border="0" /><h1>Calculadora REASON</h1>';
+	t_header[2]='<img src="reason_img/logo_regicor.jpg" border="0" /><h1>REASON calculator</h1>';
+
+	var t_about=[]
+	
+	
+	var LANG=2;
+	$(document).ready(function(){
+		//$("#info_text").html(t_instructions[0]);
+		$(".info_instructions").click(function(){
+		    //$("#info_text").slideToggle("slow");
+			$('#results').html('<div class="output">' + t_instructions[LANG] + "</div>");
+		});
+		$(".more_info").click(function(){
+		    //$("#info_text").slideToggle("slow");
+			$('#results').html('<div class="output">' + t_info[LANG] + "</div>");
+		});
+		$('#mainForm').submit(function(){ calculate();return false });
+		$('#calculate').click(function(){ return true });
+		$('.lang_class a').click(function(){
+			LANG=this.id.replace('lang_','');
+			change_language();
+			$('.lang_class').removeClass("current");
+			$(this).parent().addClass("current")
+			
+			return false});
+		$('#age').change(function(){
+			var valact=this.value;
+			if(valact==''){
+				var err = sprintf(t_missing[LANG], t_age[LANG])
+				alert( err );
+				return
+			}
+			valact=valact.replace(',','.');
+			var aux=parseFloat(valact);
+			if(aux < age_filter[0] || age_filter[1] < aux ){
+				var err=sprintf(t_out_of_range[LANG],t_age[LANG], age_filter[0], age_filter[1]);
+				alert( err );
+				return
+			}});
+		$('#sbp').change(function(){
+			var valact=this.value;
+			if(valact==''){
+				var err = sprintf(t_missing[LANG], t_sbp[LANG])
+				alert( err );
+				return
+			}
+			valact=valact.replace(',','.');
+			var aux=parseFloat(valact);
+			if(aux < sbp_filter[0] || sbp_filter[1] < aux ){
+				var err=sprintf(t_out_of_range[LANG],t_sbp[LANG], sbp_filter[0], sbp_filter[1]);
+				alert( err );
+				return
+			}});
+		$('#dbp').change(function(){
+			var valact=this.value;
+			if(valact==''){
+				var err = sprintf(t_missing[LANG], t_dbp[LANG])
+				alert( err );
+				return
+			}
+			var aux=parseInt(valact);
+			if(aux < dbp_filter[0] || dbp_filter[1] < aux ){
+				var err=sprintf(t_out_of_range[LANG],t_dbp[LANG], dbp_filter[0], dbp_filter[1]);
+				alert( err );
+				return
+			}});
+		$('#clean').click(function(){
+			$('#results').text('');
+			$("#mainForm input[type=radio]").attr("checked",false);					
+			$("#mainForm input[type=text]").val('');
+			return false});
+		change_language();
+		});
+	function change_language(){
+		$('#lbl_age').text(t_age[LANG]+':');
+		$('#lbl_sex').text(t_sex[LANG]+':');
+		$('#lbl_smoker').text(t_smoker[LANG]+':');
+		$('#lbl_diabetes').text(t_diabetes[LANG]+':');
+		$('#lbl_sex1').text(t_man[LANG]);
+		$('#lbl_sex2').text(t_woman[LANG]);
+		$('#lbl_smoker1').text(t_never[LANG]);
+		$('#lbl_smoker2').text(t_smoking[LANG]);
+		$('#lbl_smoker3').text(t_previously[LANG]);
+		$('#lbl_diabetes1').text(t_yes[LANG]);
+		$('#lbl_diabetes2').text(t_no[LANG]);
+		$('#lbl_sbp').text(t_sbp[LANG]);
+		$('#lbl_dbp').text(t_dbp[LANG]);
+		$('#calculate').val(t_calculate[LANG]);
+		$('#clean').text(t_clean[LANG]);
+		$('#info_1').text(t_instr_acces[LANG]);
+		$('#info_2').text(t_inf_acces[LANG]);
+		//$('#about').html('<div class="info"><p>'+t_about[LANG]+'<\/p><\/div>');
+		$('#header').html(t_header[LANG]);
+		$('#results').html("")
+	}
+	function calculate(){
+
+		var age=$('#age').val();
+		if(age==''){
+			var err=sprintf(t_missing[LANG],t_age[LANG]);
+			alert(err);
+			return
+		}
+		age=parseInt(age);
+		if(age < age_filter[0] || age_filter[1] < age ){
+			var err=sprintf(t_out_of_range[LANG],t_age[LANG], age_filter[0], age_filter[1]);
+			alert( err );
+			return
+		}
+		if($('#sex1').attr('checked'))
+			var sex=0;
+		else if($('#sex2').attr('checked'))
+			var sex=1;
+		else{
+			var err=sprintf(t_missing[LANG],t_sex[LANG]);
+			alert(err);
+			return''
+		}
+		if($('#smoker1').attr('checked'))
+			var smoker=0;
+		else if($('#smoker2').attr('checked'))
+			var smoker=1;
+		else if($('#smoker3').attr('checked'))
+			var smoker=2;
+		else{
+			var err=sprintf(t_missing[LANG],t_smoker[LANG]);
+			alert(err);
+			return''
+		}
+		if($('#diabetes1').attr('checked'))
+			var diabetes=1;
+		else if($('#diabetes2').attr('checked'))
+			var diabetes=0;
+		else{
+			var err=sprintf(t_missing[LANG],t_diabetes[LANG]);
+			alert(err);
+			return''
+		}
+		var sbp=$('#sbp').val();
+		if(sbp==''){
+			var err=sprintf(t_missing[LANG],t_sbp[LANG]);
+			alert(err);
+			return
+		}
+		sbp=parseFloat(sbp);
+		if(sbp < sbp_filter[0] || sbp_filter[1] < sbp ){
+			var err=sprintf(t_out_of_range[LANG],t_sbp[LANG], sbp_filter[0], sbp_filter[1]);
+			alert( err );
+			return
+		}
+		var dbp=$('#dbp').val();
+		if(dbp==''){
+			var err=sprintf(t_missing[LANG],t_dbp[LANG]);
+			alert(err);
+			return
+		}
+		dbp=parseFloat(dbp);
+		if(dbp < dbp_filter[0] || dbp_filter[1] < dbp ){
+			var err=sprintf(t_out_of_range[LANG],t_dbp[LANG], dbp_filter[0], dbp_filter[1]);
+			alert( err );
+			return
+		}
+		if(smoker == 0){
+			former = 0;
+			current = 0;
+		}else if(smoker == 1){
+			former = 0;
+			current = 1;
+		}else{
+			former = 1;
+			current = 0;
+		}
+		y =  -9.494 + 0.134* parseFloat(sex) + 0.075*parseFloat(age) + 0.02*(parseFloat(sbp)-parseFloat(dbp)) + 0.193*parseFloat(diabetes) + 0.814*parseFloat(former) + 1.264*parseFloat(current);
+		var tant = Math.ceil(100.0/(1.0 + Math.exp(-y)));
+		
+		var info=sprintf(t_output[LANG], tant);
+		
+		if(tant >= 4.1){
+			info += t_output_extra[LANG];
+		}
+		info += t_output_extrafinal[LANG];
+		var output='<div class="output"><h4>REASON<\/h4><p>'+info+'<\/p><\/div>';
+		$('#results').html(output)
+	}
+	//]]>
+	</script>
+
+</head>
+
+<body>
+	<div id="content">
+
+		<div id="header"><img src="reason_img/logo_regicor.jpg" border="0" /></div>
+
+		<div id="language">
+			<ul>
+				<li class="lang_class"><a href="#" id="lang_0">Català</a></li>
+				<li class="lang_class"><a href="#" id="lang_1">Castellano</a></li>
+				<li class="lang_class current"><a href="#" id="lang_2" class="lang_class">English</a></li>
+			</ul>
+		</div>
+		
+		<div id="about">
+		</div>
+		
+		<div id="results">
+		</div>
+		
+		<div id="userform">
+		
+			<form id="mainForm" action="" method="post">
+				<fieldset>
+					<table id="params" cellpadding="0" cellspacing="0">
+						<tr id="pnl_age">
+							<td id="lbl_age">Age</td>
+							<td><input type="text" name="age" id="age" size="5" value="" /></td>
+						</tr>
+						<tr id="pnl_sex">
+							<td id="lbl_sex">Sex</td>
+							<td>
+								<input type="radio" id="sex1" name="sex" value="1" /><label for="sex1" id="lbl_sex1">Man</label>
+								<input type="radio" id="sex2" name="sex" value="2" /><label for="sex2" id="lbl_sex2">Woman</label>
+							</td>
+						</tr>
+						<tr id="pnl_smoker">
+							<td id="lbl_smoker" valign="top">Smoker</td>
+							<td>
+								<input type="radio" id="smoker1" name="smoker" value="1" /><label for="smoker1" id="lbl_smoker1">Never</label><br/>
+								<input type="radio" id="smoker2" name="smoker" value="2" /><label for="smoker2" id="lbl_smoker2">Currently or smoking one least ago</label><br />
+								<input type="radio" id="smoker3" name="smoker" value="3" /><label for="smoker3" id="lbl_smoker3">I quit at least one year ago</label>
+							</td>
+						</tr>
+						<tr id="pnl_diabetes">
+							<td id="lbl_diabetes">Diabetes</td>
+							<td>
+								<input type="radio" id="diabetes1" name="diabetes" value="1" /><label for="diabetes1" id="lbl_diabetes1">Yes</label>
+								<input type="radio" id="diabetes2" name="diabetes" value="2" /><label for="diabetes2" id="lbl_diabetes2">No</label>
+							</td>
+						</tr>
+						<tr id="pnl_sbp">
+							<td id="lbl_sbp">Systolic blood pressure (mmHg)</td>
+							<td><input type="text" name="sbp" id="sbp" size="5" /></td>
+						</tr>
+						<tr id="pnl_dbp">
+							<td id="lbl_dbp">Diastolic blood pressure (mmHg)</td>
+							<td><input type="text" name="dbp" id="dbp" size="5" /></td>
+						</tr>
+					</table>
+					<br />
+					&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+					<a href="#" id="clean">Clean</a>	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+					<input type="submit" id="calculate" name="calculate" value="calculate" /><br />
+				</fieldset><br />
+			</form>
+		</div>
+		<div id="information">
+			<ul>
+				<li class="info_instructions"><a href="#" id="info_1">instructions</a></li>
+				<li class="more_info"><a href="#" id="info_2">more info</a></li>
+			</ul>
+		</div>
+		<div align="right">&copy; 2012 <a href="http://www.idiapjgol.org/">IDIAP Jordi Gol</a></div>
+		<br /><br />
+		<hr>
+		<br />
+		<center>
+		<img src="reason_img/scaled3_idiap.png" />
+		<img src="reason_img/scaled3_imim.png" />		
+		<img src="reason_img/scaled3_idibgi.png" />
+		<img src="reason_img/scaled3_ics.png" />
+		<!--<img src="reason_img/scaled2_regicor_35anys.png" /><br /><br />-->
+		<img src="reason_img/scaled3_rediapp.png" />
+		<img src="reason_img/scaled3_FEDER-HERACLES.png" />
+		</center>
+	</div>
+</body>
+</html>
